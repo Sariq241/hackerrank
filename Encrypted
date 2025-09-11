@@ -1,0 +1,50 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
+char* encryption(char* s) {
+    // 1) remove spaces in-place
+    int L = 0;
+    for (int i = 0; s[i]; i++) {
+        if (s[i] != ' ') s[L++] = s[i];
+    }
+    s[L] = '\0';
+
+    // 2) rows and cols
+    double root = sqrt((double)L);
+    int rows = (int)floor(root);
+    int cols = (int)ceil(root);
+    if (rows * cols < L) rows++;
+
+    // 3) output buffer: L + spaces + 1
+    int maxLen = L + cols + 1;
+    char *out = malloc(maxLen);
+    if (!out) exit(1);
+
+    // 4) column-wise build
+    int q = 0;
+    for (int c = 0; c < cols; c++) {
+        for (int r = 0; r < rows; r++) {
+            int idx = r * cols + c;
+            if (idx < L) {
+                out[q++] = s[idx];
+            }
+        }
+        if (c < cols - 1) out[q++] = ' ';
+    }
+    out[q] = '\0';
+    return out;
+}
+
+int main() {
+    char input[1000];
+    fgets(input, sizeof(input), stdin);
+    input[strcspn(input, "\n")] = 0; // remove newline
+
+    char* result = encryption(input);
+    printf("%s\n", result);
+
+    free(result);
+    return 0;
+}
