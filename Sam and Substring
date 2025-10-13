@@ -17,7 +17,7 @@ int substrings(char* n) {
 }
 
 int main() {
-    char n[100001];  // Adjust size as needed
+    static char n[2000005];  // large enough buffer
     scanf("%s", n);
     printf("%d\n", substrings(n));
     return 0;
