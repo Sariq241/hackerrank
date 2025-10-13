@@ -1,0 +1,24 @@
+#include <stdio.h>
+#include <string.h>
+
+int substrings(char* n) {
+    const int MOD = 1000000007;
+    long long total_sum = 0;
+    long long sum_end_at = 0;
+    int length = strlen(n);
+
+    for (int i = 0; i < length; i++) {
+        int digit = n[i] - '0';
+        sum_end_at = (10LL * sum_end_at + (long long)(i + 1) * digit) % MOD;
+        total_sum = (total_sum + sum_end_at) % MOD;
+    }
+
+    return (int)total_sum;
+}
+
+int main() {
+    char n[100001];  // Adjust size as needed
+    scanf("%s", n);
+    printf("%d\n", substrings(n));
+    return 0;
+}
