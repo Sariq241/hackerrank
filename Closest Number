@@ -1,0 +1,254 @@
+#include <assert.h>
+#include <ctype.h>
+#include <limits.h>
+#include <math.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+char* readline();
+char* ltrim(char*);
+char* rtrim(char*);
+char** split_string(char*);
+
+int parse_int(char*);
+
+// --- Core Logic Functions ---
+
+// Comparison function for qsort to sort integers in ascending order.
+int compare(const void *a, const void *b) {
+    return (*(int*)a - *(int*)b);
+}
+
+/*
+ * Complete the 'closestNumbers' function.
+ *
+ * This function finds all pairs of elements with the minimum absolute difference
+ * in the input array and returns them in a single sorted array.
+ */
+int* closestNumbers(int arr_count, int* arr, int* result_count) {
+   
+    if (arr_count < 2) {
+        *result_count = 0;
+        return NULL;
+    }
+
+    // 1. Sort the array.
+    qsort(arr, arr_count, sizeof(int), compare);
+
+    // 2. Find the minimum absolute difference (min_diff).
+    int min_diff = INT_MAX;
+    for (int i = 0; i < arr_count - 1; i++) {
+        // Since the array is sorted, this is the absolute difference.
+        int diff = arr[i+1] - arr[i];
+        if (diff < min_diff) {
+            min_diff = diff;
+        }
+    }
+
+    // 3. Count the pairs that have the minimum difference.
+    int pairs_count = 0;
+    for (int i = 0; i < arr_count - 1; i++) {
+        if (arr[i+1] - arr[i] == min_diff) {
+            pairs_count++;
+        }
+    }
+
+    // 4. Allocate memory for the result array.
+    *result_count = pairs_count * 2;
+    int *result = (int *)malloc(*result_count * sizeof(int));
+    
+    if (result == NULL) {
+        *result_count = 0;
+        return NULL;
+    }
+
+    // 5. Populate the result array with the pairs.
+    int result_index = 0;
+    for (int i = 0; i < arr_count - 1; i++) {
+        if (arr[i+1] - arr[i] == min_diff) {
+            // Add the smaller number (arr[i])
+            result[result_index++] = arr[i];
+            // Add the larger number (arr[i+1])
+            result[result_index++] = arr[i+1];
+        }
+    }
+
+    return result;
+}
+
+// --- Driver and Helper Functions ---
+
+int main()
+{
+    // Program entry point. Opens file for output.
+    FILE* fptr = fopen(getenv("OUTPUT_PATH"), "w");
+
+    // Read the count of numbers
+    char* n_line = readline(); // Read count line first
+    int n = parse_int(ltrim(rtrim(n_line)));
+    free(n_line); // Free the line buffer for 'n'
+
+    // Read the array elements line
+    char* arr_line = readline();
+    char** arr_temp = split_string(rtrim(arr_line));
+
+    // Allocate and populate the integer array
+    int* arr = malloc(n * sizeof(int));
+
+    for (int i = 0; i < n; i++) {
+        int arr_item = parse_int(*(arr_temp + i));
+        *(arr + i) = arr_item;
+    }
+    
+    // Free temporary allocations
+    free(arr_temp); // Free the array of pointers
+    free(arr_line); // Free the string buffer used by readline and modified by strtok
+
+    int result_count;
+    int* result = closestNumbers(n, arr, &result_count);
+
+    // Print the result array
+    for (int i = 0; i < result_count; i++) {
+        fprintf(fptr, "%d", *(result + i));
+
+        if (i != result_count - 1) {
+            fprintf(fptr, " ");
+        }
+    }
+
+    fprintf(fptr, "\n");
+
+    // Clean up dynamically allocated memory
+    free(arr);
+    free(result);
+
+    fclose(fptr);
+
+    return 0;
+}
+
+char* readline() {
+    size_t alloc_length = 1024;
+    size_t data_length = 0;
+
+    char* data = malloc(alloc_length);
+
+    while (true) {
+        char* cursor = data + data_length;
+        char* line = fgets(cursor, alloc_length - data_length, stdin);
+
+        if (!line) {
+            break;
+        }
+
+        data_length += strlen(cursor);
+
+        if (data_length < alloc_length - 1 || data[data_length - 1] == '\n') {
+            break;
+        }
+
+        alloc_length <<= 1;
+
+        data = realloc(data, alloc_length);
+
+        if (!data) {
+            data = NULL; // Use NULL for pointer
+            break;
+        }
+    }
+
+    if (data && data_length > 0 && data[data_length - 1] == '\n') {
+        data[data_length - 1] = '\0';
+
+        data = realloc(data, data_length);
+
+        if (!data) {
+            data = NULL;
+        }
+    } else if (data) {
+        data = realloc(data, data_length + 1);
+
+        if (!data) {
+            data = NULL;
+        } else {
+            data[data_length] = '\0';
+        }
+    }
+
+    return data;
+}
+
+char* ltrim(char* str) {
+    if (!str) {
+        return NULL;
+    }
+
+    if (!*str) {
+        return str;
+    }
+
+    while (*str != '\0' && isspace(*str)) {
+        str++;
+    }
+
+    return str;
+}
+
+char* rtrim(char* str) {
+    if (!str) {
+        return NULL;
+    }
+
+    if (!*str) {
+        return str;
+    }
+
+    char* end = str + strlen(str) - 1;
+
+    while (end >= str && isspace(*end)) {
+        end--;
+    }
+
+    *(end + 1) = '\0';
+
+    return str;
+}
+
+char** split_string(char* str) {
+    char** splits = NULL;
+    // Note: strtok modifies the input string 'str'
+    char* token = strtok(str, " ");
+
+    int spaces = 0;
+
+    while (token) {
+        splits = realloc(splits, sizeof(char*) * ++spaces);
+
+        if (!splits) {
+            return NULL;
+        }
+
+        splits[spaces - 1] = token;
+
+        token = strtok(NULL, " ");
+    }
+
+    return splits;
+}
+
+int parse_int(char* str) {
+    char* endptr;
+    // Use long to safely read potentially large numbers before casting to int
+    long value = strtol(str, &endptr, 10);
+
+    if (endptr == str || (*endptr != '\0' && !isspace(*endptr)) || value > INT_MAX || value < INT_MIN) {
+        fprintf(stderr, "Error: Invalid integer format or out of range for: %s\n", str);
+        exit(EXIT_FAILURE);
+    }
+
+    return (int)value;
+}
