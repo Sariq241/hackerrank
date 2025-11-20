@@ -1,0 +1,60 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct {
+    long row;
+    long start;
+    long end;
+} Track;
+
+int cmp(const void* a, const void* b) {
+    Track* t1 = (Track*)a;
+    Track* t2 = (Track*)b;
+    if (t1->row != t2->row) return (t1->row < t2->row) ? -1 : 1;
+    if (t1->start != t2->start) return (t1->start < t2->start) ? -1 : 1;
+    return (t1->end < t2->end) ? -1 : 1;
+}
+
+int main() {
+    long n, m, k;
+    scanf("%ld %ld %ld", &n, &m, &k);
+
+    Track* tracks = (Track*)malloc(k * sizeof(Track));
+    for (long i = 0; i < k; i++) {
+        scanf("%ld %ld %ld", &tracks[i].row, &tracks[i].start, &tracks[i].end);
+    }
+
+    // Sort tracks by row, then start
+    qsort(tracks, k, sizeof(Track), cmp);
+
+    long long occupied = 0;
+    long i = 0;
+    while (i < k) {
+        long row = tracks[i].row;
+        long start = tracks[i].start;
+        long end = tracks[i].end;
+
+        // Merge overlapping intervals in the same row
+        long j = i + 1;
+        while (j < k && tracks[j].row == row) {
+            if (tracks[j].start <= end) {
+                if (tracks[j].end > end) {
+                    end = tracks[j].end;
+                }
+            } else {
+                occupied += (end - start + 1);
+                start = tracks[j].start;
+                end = tracks[j].end;
+            }
+            j++;
+        }
+        occupied += (end - start + 1);
+        i = j;
+    }
+
+    long long total = (long long)n * m;
+    printf("%lld\n", total - occupied);
+
+    free(tracks);
+    return 0;
+}
